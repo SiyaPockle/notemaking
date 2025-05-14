@@ -116,49 +116,43 @@ Now create the notes:
     results = {}
 
 
-    with open("top_k_chunks.txt", "a", encoding="utf-8") as chunk_file:
-        for query in queries:
-            # Get context for each query separately
-            docs = vector_store.similarity_search(query, k=k)
-
-            #print(f"\n==== Top {k} Chunks for Query: {query} ====\n")
-            chunk_file.write(f"\n==== Top {k} Chunks for Query: {query} ====\n")
-
-            for i, doc in enumerate(docs):
-                chunk_text = doc.page_content.strip()
-                # print(f"\n--- Chunk {i+1} ---\n{chunk_text}\n")
-                chunk_file.write(f"\n--- Chunk {i+1} ---\n{chunk_text}\n")
-
-            # Create limited-size context for prompt
-            context = "\n---\n".join([doc.page_content[:3000] for doc in docs])[:80000]
-            
-            # Generate notes
-            response = note_chain.invoke({"subject": subject, "context": context, "query": query})
-            results[query] = response['text']
-    
-    # Create a directory for storing retrieved chunks
-    chunk_dir = "retrieved_chunks"
-    os.makedirs(chunk_dir, exist_ok=True)
-    
-    for idx, query in enumerate(queries, 1):
+    # with open("top_k_chunks.txt", "a", encoding="utf-8") as chunk_file:
+    for query in queries:
         # Get context for each query separately
         docs = vector_store.similarity_search(query, k=k)
 
-        # Save each retrieved chunk separately
-        query_dir = os.path.join(chunk_dir, f"query_{idx}")
-        os.makedirs(query_dir, exist_ok=True)
+    
 
-        for i, doc in enumerate(docs):
-            chunk_path = os.path.join(query_dir, f"chunk_{i+1}.txt")
-            with open(chunk_path, "w", encoding="utf-8") as file:
-                file.write(doc.page_content)
-
-        # Combine chunks for LLM input
+        # Create limited-size context for prompt
         context = "\n---\n".join([doc.page_content[:3000] for doc in docs])[:80000]
-
-        # Generate notes for each query
-        response = note_chain.invoke({"subject":subject ,"context": context, "query": query})
+        
+        # Generate notes
+        response = note_chain.invoke({"subject": subject, "context": context, "query": query})
         results[query] = response['text']
+    
+    # Create a directory for storing retrieved chunks
+    # chunk_dir = "retrieved_chunks"
+    # os.makedirs(chunk_dir, exist_ok=True)
+    
+    # for idx, query in enumerate(queries, 1):
+    #     # Get context for each query separately
+    #     docs = vector_store.similarity_search(query, k=k)
+
+    #     # Save each retrieved chunk separately
+    #     query_dir = os.path.join(chunk_dir, f"query_{idx}")
+    #     os.makedirs(query_dir, exist_ok=True)
+
+    #     for i, doc in enumerate(docs):
+    #         chunk_path = os.path.join(query_dir, f"chunk_{i+1}.txt")
+    #         with open(chunk_path, "w", encoding="utf-8") as file:
+    #             file.write(doc.page_content)
+
+    #     # Combine chunks for LLM input
+    #     context = "\n---\n".join([doc.page_content[:3000] for doc in docs])[:80000]
+
+    #     # Generate notes for each query
+    #     response = note_chain.invoke({"subject":subject ,"context": context, "query": query})
+    #     results[query] = response['text']
 
     
     return results
